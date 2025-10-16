@@ -52,9 +52,16 @@ template:
   - sensor:
       - name: "Washer Status"
         state: >
+          {% set power = states('sensor.washer_current_consumption') | float(0) %}
           {% set running = is_state('binary_sensor.washer_running', 'on') %}
           {% set done = is_state('binary_sensor.washer_done', 'on') %}
-          {% if running %}Running{% elif done %}Done{% else %}Idle{% endif %}
+          {% if running %}
+            Running
+          {% elif done %}
+            Done
+          {% else %}
+            Idle
+          {% endif %}
 ```
 
 ## Repository layout
