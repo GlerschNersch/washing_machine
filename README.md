@@ -1,35 +1,32 @@
-# 🧺 Smart Washer Dashboard (Home Assistant)
+# Washing Machine dashboard
 
-### Overview
-A fully automated **washer monitoring dashboard** for Home Assistant that visually tracks wash cycles, power usage, and energy history — all in a **Pip-Boy-inspired green UI** with glowing **orange charts**.  
+This repository contains a Home Assistant dashboard and helper templates to monitor a washing machine's power usage and run/done states.
 
-This dashboard automatically:
-- Detects when your washer starts or stops using power thresholds  
-- Displays *Running*, *Done*, and *Idle* states with animations  
-- Resets to *Idle* when a new cycle begins (no manual reset needed)  
-- *(Optional)* Sends a push notification when the washer finishes  
-- Graphs real-time wattage and daily/monthly energy use  
+## Highlights
 
----
+- Lovelace dashboard in `dashboard/` with a retro green UI
+- Template sensors and automations in `automation/` to detect running and done states
 
-## 🔧 Requirements
+## Requirements
 
-**Integrations**
-- [Home Assistant Energy / Utility Meter](https://www.home-assistant.io/integrations/utility_meter/)
-- [ApexCharts Card](https://github.com/RomRider/apexcharts-card)
-- [Mushroom Cards](https://github.com/piitaya/lovelace-mushroom)
-- [Card Mod](https://github.com/thomasloven/lovelace-card-mod)
+- Home Assistant (core)
+- A power-measuring sensor for the washer (smart plug, energy monitor)
+- Optional Lovelace cards: ApexCharts, Mushroom, Card-mod
 
-**Entities Needed**
-- `sensor.washer_current_consumption` – real-time power draw  
-- `sensor.washer_energy_today` – daily energy use  
-- `sensor.washer_energy_month` – monthly energy use  
+### Hardware prerequisite
 
----
+- This project assumes you have a Tapo P210M smart plug (or equivalent) capable of reporting voltage and wattage. The Tapo P210M is used here to read voltage levels and power consumption.
 
-## ⚙️ Template Sensors
+## Quick setup
 
-Add the following to your `configuration.yaml` (or inside `/config/sensors/washer.yaml` if using splits):
+1. Copy the files in `dashboard/` to your Home Assistant Lovelace configuration, or paste the YAML into the raw Lovelace editor.
+2. Add the template sensors from `automation/` (or paste the snippet below) into `configuration.yaml` or into a split `sensors/washer.yaml`.
+3. Restart Home Assistant and confirm the following entities exist (or map them to your device's entity IDs):
+   - `sensor.washer_current_consumption` — power in watts
+   - `binary_sensor.washer_running`
+   - `sensor.washer_status`
+
+## Template sensors (paste into your YAML)
 
 ```yaml
 template:
@@ -55,13 +52,16 @@ template:
   - sensor:
       - name: "Washer Status"
         state: >
-          {% set power = states('sensor.washer_current_consumption') | float(0) %}
           {% set running = is_state('binary_sensor.washer_running', 'on') %}
           {% set done = is_state('binary_sensor.washer_done', 'on') %}
-          {% if running %}
-            Running
-          {% elif done %}
-            Done
-          {% else %}
-            Idle
-          {% endif %}
+          {% if running %}Running{% elif done %}Done{% else %}Idle{% endif %}
+```
+
+## Repository layout
+
+- `dashboard/` — Lovelace YAML and assets
+- `automation/` — templates and automations
+
+## License & contribution
+
+Feel free to reuse or adapt these resources. Open an issue or PR to suggest improvements.
