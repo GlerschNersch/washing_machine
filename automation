@@ -1,0 +1,14 @@
+- alias: "Notify When Washer is Done"
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.washer_done
+      to: "on"
+  action:
+    - service: notify.mobile_app_your_phone
+      data:
+        title: "Laundry Complete ✅"
+        message: "The washer has finished its cycle."
+        data:
+          notification_icon: mdi:washing-machine
+          color: "#00FF66"
+          sticky: true
