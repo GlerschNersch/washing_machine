@@ -1,0 +1,152 @@
+views:
+  - title: Washer
+    path: washer
+    type: masonry
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: custom:mushroom-title-card
+            title: 🧺 Smart Washer
+            subtitle: Pip-Boy Monitoring System
+            card_mod:
+              style: |
+                ha-card {
+                  background: none;
+                  text-align: center;
+                  color: #80ff80;
+                  font-family: 'VT323', monospace;
+                }
+
+          - type: custom:mushroom-template-card
+            primary: >
+              {% if is_state('sensor.washer_status', 'Running') %}
+                💦 Washing
+              {% elif is_state('sensor.washer_status', 'Done') %}
+                ✅ Done
+              {% else %}
+                ⏸️ Idle
+              {% endif %}
+            secondary: "Power: {{ states('sensor.washer_current_consumption') }} W"
+            icon: mdi:washing-machine
+            icon_color: >
+              {% if is_state('sensor.washer_status', 'Running') %}green
+              {% elif is_state('sensor.washer_status', 'Done') %}lime
+              {% else %}grey{% endif %}
+            icon_animation: >
+              {% if is_state('sensor.washer_status', 'Running') %}
+                rotating
+              {% else %}
+                none
+              {% endif %}
+            layout: vertical
+            fill_container: true
+            card_mod:
+              style: |
+                ha-card {
+                  border-radius: 20px;
+                  padding: 18px;
+                  background: linear-gradient(145deg, #001a00, #003300);
+                  box-shadow: 0 0 15px rgba(51,255,51,0.3);
+                  color: #80ff80;
+                  font-family: 'VT323', monospace;
+                }
+
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: entity
+                entity: sensor.washer_current_consumption
+                icon: mdi:flash
+                name: Power
+              - type: template
+                icon: mdi:timer-outline
+                content: >
+                  {% if is_state('sensor.washer_status', 'Done') %}
+                    Finished
+                  {% elif is_state('sensor.washer_status', 'Running') %}
+                    Running…
+                  {% else %}
+                    Idle
+                  {% endif %}
+              - type: entity
+                entity: sensor.washer_energy_today
+                icon: mdi:counter
+                name: Today kWh
+              - type: entity
+                entity: sensor.washer_energy_month
+                icon: mdi:lightning-bolt
+                name: Month kWh
+
+          # Orange Power Graph
+          - type: custom:apexcharts-card
+            graph_span: 3h
+            header:
+              title: ⚡ Power Usage (Watts)
+              show: true
+            apex_config:
+              chart:
+                height: 220px
+                foreColor: '#ffb84d'
+              grid:
+                borderColor: rgba(255,165,0,0.08)
+              stroke:
+                width: 3
+                curve: smooth
+                colors: ['#ff9900']
+              fill:
+                type: gradient
+                gradient:
+                  shadeIntensity: 0.9
+                  opacityFrom: 0.6
+                  opacityTo: 0.15
+              toolbar:
+                show: false
+            series:
+              - entity: sensor.washer_current_consumption
+                name: Power
+                type: line
+                curve: smooth
+                color: '#ff9900'
+                group_by:
+                  duration: 1m
+                  func: avg
+
+          # Orange Energy Graph
+          - type: custom:apexcharts-card
+            graph_span: 30d
+            header:
+              title: 📊 Energy Consumption (Daily + Monthly)
+              show: true
+            apex_config:
+              chart:
+                height: 220px
+                foreColor: '#ffb84d'
+              grid:
+                borderColor: rgba(255,165,0,0.08)
+              stroke:
+                width: 3
+                curve: smooth
+                colors: ['#ff9900']
+              fill:
+                type: gradient
+                gradient:
+                  shadeIntensity: 0.9
+                  opacityFrom: 0.6
+                  opacityTo: 0.15
+              toolbar:
+                show: false
+            series:
+              - entity: sensor.washer_energy_today
+                name: Daily Usage
+                type: column
+                color: '#ff9900'
+                group_by:
+                  duration: 1d
+                  func: sum
+              - entity: sensor.washer_energy_month
+                name: Monthly Total
+                type: line
+                color: '#ffb84d'
+                group_by:
+                  duration: 1M
+                  func: last
