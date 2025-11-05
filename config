@@ -1,0 +1,174 @@
+# ================================================================
+# 🧺 Laundry Package
+# ================================================================
+# Purpose:
+#   - Centralize all washer, dryer, and laundry room entities
+#   - Track power, energy usage, and operational status
+#   - Prepare for room-based automation (humidity, motion, etc.)
+# ================================================================
+
+# ------------------------------------------------
+# Binary Sensors – Washer & Dryer States
+# ------------------------------------------------
+binary_sensor:
+  - platform: template
+    sensors:
+      washer_running:
+        friendly_name: "Washer Running"
+        value_template: >
+          {{ states('sensor.washer_current_consumption') | float(0) > 10 }}
+        delay_on:
+          seconds: 30
+        delay_off:
+          minutes: 2
+
+      washer_done:
+        friendly_name: "Washer Done"
+        value_template: >
+          {% set power = states('sensor.washer_current_consumption') | float(0) %}
+          {% set running = is_state('binary_sensor.washer_running', 'on') %}
+          {% set lid_open = is_state('binary_sensor.washer_lid_open', 'on') %}
+          {{ not running and (power < 2 or lid_open) }}
+        delay_on:
+          minutes: 5
+        delay_off:
+          minutes: 1
+
+  - platform: template
+    sensors:
+      washer_lid_open:
+        friendly_name: "Washer Lid Open"
+        value_template: >
+          {% set power = states('sensor.washer_current_consumption') | float(0) %}
+          {{ power > 0 and power < 0.8 }}
+        delay_on:
+          seconds: 10     # avoids flicker if power dips briefly
+        delay_off:
+          seconds: 10
+
+# ------------------------------------------------
+# Template Sensors – Status and Thresholds
+# ------------------------------------------------
+template:
+  - sensor:
+      - name: "Laundry Status"
+        state: >
+          {% if is_state('binary_sensor.washer_running', 'on') %}
+            Washing
+          {% elif is_state('binary_sensor.dryer_running', 'on') %}
+            Drying
+          {% elif is_state('binary_sensor.washer_done', 'on') or is_state('binary_sensor.dryer_done', 'on') %}
+            Done
+          {% else %}
+            Idle
+          {% endif %}
+        icon: >
+          {% if is_state('binary_sensor.washer_running', 'on') or is_state('binary_sensor.dryer_running', 'on') %}
+            mdi:washing-machine
+          {% elif is_state('binary_sensor.washer_done', 'on') or is_state('binary_sensor.dryer_done', 'on') %}
+            mdi:check-circle
+          {% else %}
+            mdi:washing-machine-off
+          {% endif %}
+
+      - name: "Washer Power Min"
+        unit_of_measurement: "W"
+        state: >
+          {% set stats = state_attr('sensor.washer_power_stats', 'min') %}
+          {{ stats if stats is number else states('sensor.washer_power_min') }}
+
+      - name: "Washer Power Max"
+        unit_of_measurement: "W"
+        state: >
+          {% set stats = state_attr('sensor.washer_power_stats', 'max') %}
+          {{ stats if stats is number else states('sensor.washer_power_max') }}
+
+      - name: "Washer Power Avg"
+        unit_of_measurement: "W"
+        state: >
+          {% set stats = state_attr('sensor.washer_power_stats', 'mean') %}
+          {{ stats if stats is number else states('sensor.washer_power_avg') }}
+
+      - name: "Washer Running Threshold"
+        unit_of_measurement: "W"
+        state: >
+          {% set min = states('sensor.washer_power_min') | float(0) %}
+          {{ (min + 5) | round(1) }}
+
+      - name: "Washer Power Instant"
+        unit_of_measurement: "W"
+        device_class: power
+        state: "{{ states('sensor.washer_current_consumption') | float(0) }}"
+
+# ------------------------------------------------
+# History Stats – Usage Tracking
+# ------------------------------------------------
+sensor:
+  - platform: history_stats
+    name: "Washer Runtime Today"
+    entity_id: binary_sensor.washer_running
+    state: "on"
+    type: time
+    start: "{{ today_at('00:00:00') }}"
+    end: "{{ now() }}"
+
+  - platform: history_stats
+    name: "Dryer Runtime Today"
+    entity_id: binary_sensor.dryer_running
+    state: "on"
+    type: time
+    start: "{{ today_at('00:00:00') }}"
+    end: "{{ now() }}"
+
+# ------------------------------------------------
+# Integration Sensors – Energy Tracking
+# ------------------------------------------------
+  - platform: integration
+    source: sensor.washer_current_consumption
+    name: Washer Energy Today
+    unit_prefix: k
+    round: 3
+    method: left
+
+  # Optional dryer energy (when dryer power sensor exists)
+  - platform: integration
+    source: sensor.dryer_power
+    name: Dryer Energy Today
+    unit_prefix: k
+    round: 3
+    method: left
+
+# ------------------------------------------------
+# Utility Meters – Daily/Weekly/Monthly Totals
+# ------------------------------------------------
+utility_meter:
+  washer_energy_daily:
+    source: sensor.washer_energy_today
+    cycle: daily
+  washer_energy_weekly:
+    source: sensor.washer_energy_today
+    cycle: weekly
+  washer_energy_monthly:
+    source: sensor.washer_energy_today
+    cycle: monthly
+
+  dryer_energy_daily:
+    source: sensor.dryer_energy_today
+    cycle: daily
+  dryer_energy_weekly:
+    source: sensor.dryer_energy_today
+    cycle: weekly
+  dryer_energy_monthly:
+    source: sensor.dryer_energy_today
+    cycle: monthly
+
+recorder:
+  commit_interval: 1
+  include:
+    entities:
+      - sensor.washer_current_consumption
+  exclude:
+    domains:
+      - automation
+      - script
+
