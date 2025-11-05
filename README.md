@@ -15,6 +15,8 @@ This automation package tracks your washer’s **power consumption**, **lid stat
 
 It’s designed for any washer connected to a **power-reporting smart plug** such as a TP-Link Kasa, Shelly Plug, or Tasmota device.
 
+<img width="640" height="971" alt="image" src="https://github.com/user-attachments/assets/e05e79c3-7d98-43db-82db-802b16f22c4c" />
+
 ---
 
 ## ⚙️ Features
