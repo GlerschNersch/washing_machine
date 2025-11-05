@@ -1,4 +1,4 @@
-# 🧺 Smart Washer Automation for Home Assistant
+# 🧺 "Dumb" Smart Washer Automation for Home Assistant
 
 Automate your laundry notifications and never forget a finished load again!  
 This project integrates a smart plug, power monitoring, and Home Assistant templates to track washer activity and notify your household when the cycle completes.
