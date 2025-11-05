@@ -1,14 +1,39 @@
-- alias: "Notify When Washer is Done"
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.washer_done
-      to: "on"
-  action:
-    - service: notify.mobile_app_your_phone
-      data:
-        title: "Laundry Complete ✅"
-        message: "The washer has finished its cycle."
-        data:
-          notification_icon: mdi:washing-machine
-          color: "#00FF66"
-          sticky: true
+alias: 🧺 Washer Done Notification
+description: Notify and announce when the washer cycle completes
+trigger:
+  - platform: state
+    entity_id: binary_sensor.washer_done
+    from: "off"
+    to: "on"
+condition: []
+action:
+  # 1️⃣ Notify Dad's phone
+  - service: notify.mobile_app_sm_s938u1
+    data:
+      title: "✅ Laundry Complete"
+      message: "The washer cycle is done!"
+
+  # 2️⃣ Speak on Kitchen Display
+  - service: tts.speak
+    metadata: {}
+    data:
+      cache: true
+      media_player_entity_id: media_player.kitchen_display_2
+      message: "The washing machine is done. Please move the clothes to the dryer."
+    target:
+      entity_id: tts.google_translate_en_com
+
+  # 3️⃣ (Optional) Browser_mod popup to Hallway display
+  - service: browser_mod.popup
+    data:
+      browser_id: hallway
+      title: "🧺 Washer Complete"
+      content: |
+        <h2 style="color:#ffb84d; font-family:'VT323', monospace;">Cycle Finished!</h2>
+        <p style="font-size:1.2em; color:#ffb84d;">The washer is done. Time to switch loads!</p>
+      autoclose: false
+      right_button:
+        label: "Dismiss"
+        action: close
+
+mode: single
