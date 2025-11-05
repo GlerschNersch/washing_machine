@@ -27,7 +27,16 @@ It’s designed for any washer connected to a **power-reporting smart plug** suc
 - 🎨 Integrated dashboard card for live washer status  
 
 ---
+| Requirement                                                                     | Description                                                              | Link                                                                   |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| **Home Assistant** (2024.6+)                                                    | Core platform for automations                                            | [home-assistant.io](https://www.home-assistant.io/)                    |
+| **Power-Reporting Smart Plug**                                                  | Any plug that reports real-time power draw (e.g., Kasa, Shelly, Tasmota) | —                                                                      |
+| **[Browser Mod](https://github.com/thomasloven/hass-browser_mod)**              | Enables popups and frontend modals                                       | [GitHub](https://github.com/thomasloven/hass-browser_mod)              |
+| **[Mushroom Cards](https://github.com/piitaya/lovelace-mushroom)**              | Modern UI cards for dashboard visualization                              | [GitHub](https://github.com/piitaya/lovelace-mushroom)                 |
+| **[ApexCharts Card](https://github.com/RomRider/apexcharts-card)** *(optional)* | For plotting power and energy data                                       | [GitHub](https://github.com/RomRider/apexcharts-card)                  |
+| **TTS Integration**                                                             | `tts.google_translate_en_com` or `tts.piper` for announcements           | [Home Assistant Docs](https://www.home-assistant.io/integrations/tts/) |
 
+---
 ## 🧩 How It Works
 
 1. The **washer_running** binary sensor activates when power draw exceeds 10 W.  
