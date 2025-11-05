@@ -7,36 +7,33 @@ views:
         cards:
           - type: custom:mushroom-title-card
             title: 🧺 Smart Washer
-            subtitle: Pip-Boy Monitoring System
+            subtitle: Cycle Monitoring System
             card_mod:
               style: |
                 ha-card {
                   background: none;
                   text-align: center;
-                  color: #80ff80;
+                  color: #ffb84d;
                   font-family: 'VT323', monospace;
                 }
-
           - type: custom:mushroom-template-card
-            primary: >
-              {% if is_state('sensor.washer_status', 'Running') %}
+            primary: |
+              {% if is_state('binary_sensor.washer_running', 'on') %}
                 💦 Washing
-              {% elif is_state('sensor.washer_status', 'Done') %}
+              {% elif is_state('binary_sensor.washer_done', 'on') %}
                 ✅ Done
               {% else %}
                 ⏸️ Idle
               {% endif %}
-            secondary: "Power: {{ states('sensor.washer_current_consumption') }} W"
+            secondary: 'Power: {{ states(''sensor.washer_current_consumption'') }} W'
             icon: mdi:washing-machine
-            icon_color: >
-              {% if is_state('sensor.washer_status', 'Running') %}green
-              {% elif is_state('sensor.washer_status', 'Done') %}lime
-              {% else %}grey{% endif %}
-            icon_animation: >
-              {% if is_state('sensor.washer_status', 'Running') %}
-                rotating
+            icon_color: |
+              {% if is_state('binary_sensor.washer_running', 'on') %}
+                #ff9900
+              {% elif is_state('binary_sensor.washer_done', 'on') %}
+                #ffaa33
               {% else %}
-                none
+                grey
               {% endif %}
             layout: vertical
             fill_container: true
@@ -45,12 +42,11 @@ views:
                 ha-card {
                   border-radius: 20px;
                   padding: 18px;
-                  background: linear-gradient(145deg, #001a00, #003300);
-                  box-shadow: 0 0 15px rgba(51,255,51,0.3);
-                  color: #80ff80;
+                  background: linear-gradient(145deg, #1a0a00, #331a00);
+                  box-shadow: 0 0 15px rgba(255,165,0,0.3);
+                  color: #ffb84d;
                   font-family: 'VT323', monospace;
                 }
-
           - type: custom:mushroom-chips-card
             alignment: center
             chips:
@@ -60,24 +56,104 @@ views:
                 name: Power
               - type: template
                 icon: mdi:timer-outline
-                content: >
-                  {% if is_state('sensor.washer_status', 'Done') %}
+                content: |
+                  {% if is_state('binary_sensor.washer_done', 'on') %}
                     Finished
-                  {% elif is_state('sensor.washer_status', 'Running') %}
+                  {% elif is_state('binary_sensor.washer_running', 'on') %}
                     Running…
                   {% else %}
                     Idle
                   {% endif %}
+              - type: template
+                icon: |
+                  {% if is_state('binary_sensor.washer_lid_open', 'on') %}
+                    mdi:lid-open
+                  {% else %}
+                    mdi:lid
+                  {% endif %}
+                content: |
+                  {% if is_state('binary_sensor.washer_lid_open', 'on') %}
+                    Lid Open
+                  {% else %}
+                    Lid Closed
+                  {% endif %}
+                icon_color: |
+                  {% if is_state('binary_sensor.washer_lid_open', 'on') %}
+                    red
+                  {% else %}
+                    grey
+                  {% endif %}
               - type: entity
-                entity: sensor.washer_energy_today
+                entity: sensor.washer_energy_daily
                 icon: mdi:counter
                 name: Today kWh
               - type: entity
-                entity: sensor.washer_energy_month
+                entity: sensor.washer_energy_monthly
                 icon: mdi:lightning-bolt
                 name: Month kWh
-
-          # Orange Power Graph
+              - type: entity
+                entity: sensor.washer_runtime_today
+                icon: mdi:clock-outline
+                name: Runtime
+            card_mod:
+              style: |
+                ha-card {
+                  --chip-background: #1a0a00;
+                  --chip-text-color: #ffb84d;
+                  --chip-icon-color: #ff9900;
+                  font-family: 'VT323', monospace;
+                }
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-template-card
+                icon: mdi:play-circle
+                primary: Started
+                icon_color: |
+                  {% if is_state('binary_sensor.washer_running', 'on') %}
+                    #ff9900
+                  {% else %}
+                    grey
+                  {% endif %}
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: #1a0a00;
+                      color: #ffb84d;
+                      font-family: 'VT323', monospace;
+                    }
+                    ha-icon {
+                      {% if is_state('binary_sensor.washer_running', 'on') %}
+                        animation: pulse 2s infinite;
+                        filter: drop-shadow(0 0 10px #ff9900);
+                      {% endif %}
+                    }
+                    @keyframes pulse {
+                      0% { transform: scale(1); opacity: 1; }
+                      50% { transform: scale(1.15); opacity: 0.6; }
+                      100% { transform: scale(1); opacity: 1; }
+                    }
+              - type: custom:mushroom-template-card
+                icon: mdi:check-bold
+                primary: Done
+                icon_color: |
+                  {% if is_state('binary_sensor.washer_done', 'on') %}
+                    #ffaa33
+                  {% else %}
+                    grey
+                  {% endif %}
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: #1a0a00;
+                      color: #ffb84d;
+                      font-family: 'VT323', monospace;
+                    }
+                    ha-icon {
+                      {% if is_state('binary_sensor.washer_done', 'on') %}
+                        animation: pulse 2s infinite;
+                        filter: drop-shadow(0 0 10px #ffaa33);
+                      {% endif %}
+                    }
           - type: custom:apexcharts-card
             graph_span: 3h
             header:
@@ -92,15 +168,36 @@ views:
               stroke:
                 width: 3
                 curve: smooth
-                colors: ['#ff9900']
+                colors:
+                  - '#ff9900'
               fill:
                 type: gradient
                 gradient:
                   shadeIntensity: 0.9
                   opacityFrom: 0.6
                   opacityTo: 0.15
+                  colorStops:
+                    - offset: 0
+                      color: '#ff9900'
+                      opacity: 0.9
+                    - offset: 100
+                      color: '#ff6600'
+                      opacity: 0.2
               toolbar:
                 show: false
+            style: |
+              ha-card {
+                padding: 12px 16px 8px 16px;
+                border-radius: 20px;
+                box-shadow: 0 0 20px rgba(255,165,0,0.25);
+                background: rgba(20,10,0,0.95);
+                color: #ffb84d;
+                font-family: 'VT323', monospace;
+              }
+              .apexcharts-series path {
+                filter: drop-shadow(0px 0px 10px #ff9900)
+                        drop-shadow(0px 0px 20px rgba(255,153,0,0.7));
+              }
             series:
               - entity: sensor.washer_current_consumption
                 name: Power
@@ -110,8 +207,9 @@ views:
                 group_by:
                   duration: 1m
                   func: avg
-
-          # Orange Energy Graph
+            yaxis:
+              - decimals: 0
+                min: 0
           - type: custom:apexcharts-card
             graph_span: 30d
             header:
@@ -126,24 +224,45 @@ views:
               stroke:
                 width: 3
                 curve: smooth
-                colors: ['#ff9900']
+                colors:
+                  - '#ff9900'
               fill:
                 type: gradient
                 gradient:
                   shadeIntensity: 0.9
                   opacityFrom: 0.6
                   opacityTo: 0.15
+                  colorStops:
+                    - offset: 0
+                      color: '#ff9900'
+                      opacity: 0.9
+                    - offset: 100
+                      color: '#ff6600'
+                      opacity: 0.2
               toolbar:
                 show: false
+            style: |
+              ha-card {
+                padding: 12px 16px 8px 16px;
+                border-radius: 20px;
+                background: rgba(20,10,0,0.95);
+                box-shadow: 0 0 20px rgba(255,165,0,0.25);
+                color: #ffb84d;
+                font-family: 'VT323', monospace;
+              }
+              .apexcharts-series path {
+                filter: drop-shadow(0px 0px 10px #ff9900)
+                        drop-shadow(0px 0px 20px rgba(255,153,0,0.7));
+              }
             series:
-              - entity: sensor.washer_energy_today
+              - entity: sensor.washer_energy_daily
                 name: Daily Usage
                 type: column
                 color: '#ff9900'
                 group_by:
                   duration: 1d
                   func: sum
-              - entity: sensor.washer_energy_month
+              - entity: sensor.washer_energy_monthly
                 name: Monthly Total
                 type: line
                 color: '#ffb84d'
